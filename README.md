@@ -22,7 +22,7 @@ Traditional CAPTCHAs are increasingly bypassed by AI. Video comprehension requir
 ## Run locally
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/ParadoxDevp/captcha.git
 cd captcha
 
 # Serve over HTTP (required — YouTube embeds don't work on file://)
