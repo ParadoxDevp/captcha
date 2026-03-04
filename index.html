@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video CAPTCHA — Prove You're Human</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f1a;
+      --surface: #161929;
+      --surface2: #1e2236;
+      --border: #2a2f4a;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --radius: 16px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(108, 99, 255, 0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 90% 90%, rgba(167, 139, 250, 0.1) 0%, transparent 60%);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 620px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(108, 99, 255, 0.1);
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Header */
+    .header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .shield {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 16px rgba(108, 99, 255, 0.4);
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .header-text p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Video */
+    .video-wrap {
+      position: relative;
+      background: #000;
+      aspect-ratio: 16/9;
+    }
+
+    .video-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .video-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    /* Body */
+    .body {
+      padding: 20px 24px;
+    }
+
+    .question {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .question strong {
+      color: var(--text);
+    }
+
+    /* Options */
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: left;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px;
+      line-height: 1.4;
+      transition: border-color 0.18s, background 0.18s, transform 0.12s;
+      width: 100%;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: rgba(108, 99, 255, 0.08);
+      transform: translateX(3px);
+    }
+
+    .option-btn:active:not(:disabled) {
+      transform: translateX(1px) scale(0.99);
+    }
+
+    .option-btn .badge {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: background 0.18s, border-color 0.18s, color 0.18s;
+    }
+
+    .option-btn:hover:not(:disabled) .badge {
+      border-color: var(--accent);
+      color: var(--accent2);
+      background: rgba(108, 99, 255, 0.12);
+    }
+
+    .option-btn.correct {
+      border-color: var(--success) !important;
+      background: rgba(34, 197, 94, 0.08) !important;
+    }
+
+    .option-btn.correct .badge {
+      background: var(--success);
+      border-color: var(--success);
+      color: #fff;
+    }
+
+    .option-btn.wrong {
+      border-color: var(--danger) !important;
+      background: rgba(239, 68, 68, 0.08) !important;
+    }
+
+    .option-btn.wrong .badge {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+    }
+
+    .option-btn.reveal-correct {
+      border-color: var(--success) !important;
+      background: rgba(34, 197, 94, 0.06) !important;
+    }
+
+    .option-btn.reveal-correct .badge {
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .option-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+
+    /* Footer row */
+    .footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 18px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .change-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: border-color 0.18s, color 0.18s, background 0.18s;
+    }
+
+    .change-btn:hover:not(:disabled) {
+      border-color: var(--accent2);
+      color: var(--accent2);
+      background: rgba(167, 139, 250, 0.07);
+    }
+
+    .change-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .change-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .skips-left {
+      font-size: 11.5px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .skip-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .skip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent2);
+      transition: background 0.3s;
+    }
+
+    .skip-dot.used {
+      background: var(--border);
+    }
+
+    /* Result banner */
+    .result-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 16px;
+      border-radius: 11px;
+      margin-top: 14px;
+      font-size: 13.5px;
+      font-weight: 500;
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .result-banner.success {
+      display: flex;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #4ade80;
+    }
+
+    .result-banner.fail {
+      display: flex;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+
+    .result-icon {
+      font-size: 20px;
+    }
+
+    /* Loading state */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-overlay p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* Branding */
+    .brand {
+      padding: 10px 24px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-top: 1px solid var(--border);
+    }
+
+    .brand span {
+      font-size: 11px;
+      color: var(--border);
+    }
+
+    .brand strong {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card" id="captchaCard">
+    <div class="header">
+      <div class="shield">🛡</div>
+      <div class="header-text">
+        <h1>Video CAPTCHA Verification</h1>
+        <p>Watch the clip and select the correct description</p>
+      </div>
+    </div>
+
+    <div class="video-wrap">
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Loading video…</p>
+      </div>
+      <iframe id="ytPlayer" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      <div class="video-overlay"></div>
+    </div>
+
+    <div class="body">
+      <p class="question">
+        <strong>Watch the video above</strong> and pick the option that best describes what's happening:
+      </p>
+
+      <div class="options" id="optionsGrid"></div>
+
+      <div id="resultBanner" class="result-banner"></div>
+
+      <div class="footer-row">
+        <button class="change-btn" id="changeBtn" onclick="changeVideo()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10" />
+            <polyline points="23 20 23 14 17 14" />
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
+          </svg>
+          Try a different video
+        </button>
+        <div class="skips-left">
+          <span id="skipsText">3 changes left</span>
+          <div class="skip-dots" id="skipDots">
+            <div class="skip-dot" id="dot0"></div>
+            <div class="skip-dot" id="dot1"></div>
+            <div class="skip-dot" id="dot2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brand">
+      <span>🔒</span>
+      <strong>CAPTCHA</strong>
+      <span>— Video comprehension verification</span>
+    </div>
+  </div>
+
+  <script>
+    // ── Dataset — loaded from full JSON at runtime ─────────────────────────────────
+    let DATASET = null; // populated by fetchDataset()
+
+    async function fetchDataset() {
+      // Show a dataset-loading message inside the loading overlay
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.querySelector('p').textContent = 'Loading dataset…';
+
+      const res = await fetch('/msrvtt_train_9k.json');
+      const raw = await res.json();
+
+      // Normalise: extract YouTube video ID from the url field, filter entries
+      // that have a YouTube URL and at least 1 caption.
+      DATASET = raw
+        .filter(e => e.url && e.caption && e.caption.length > 0)
+        .map(e => {
+          // Extract YouTube video ID from full URL (e.g. https://www.youtube.com/watch?v=XXXXX)
+          let videoId = e.url;
+          try {
+            const u = new URL(e.url);
+            videoId = u.searchParams.get('v') || u.pathname.split('/').pop();
+          } catch (_) { /* bare ID fallback */ }
+          return {
+            id: e.id,
+            url: videoId,
+            start: Math.floor(e['start time'] ?? 0),
+            end: Math.ceil(e['end time'] ?? 30),
+            captions: e.caption,
+          };
+        })
+        .filter(e => e.url && e.url.length > 5); // discard malformed IDs
+    }
+    // ─── State ────────────────────────────────────────────────────────────────────
+    let currentEntry = null;
+    let currentOptions = [];
+    let correctCaption = '';
+    let changesLeft = 3;
+    let answered = false;
+    let loopTimer = null;
+
+    const LABELS = ['A', 'B', 'C', 'D'];
+
+    // ─── Video loading (direct src, no JS API) ────────────────────────────────────
+    function buildEmbedUrl(videoId, start, end) {
+      // loop=1 + playlist=videoId makes YouTube loop the clip natively.
+      // autoplay=1, mute=0 so it autoplays with sound.
+      const params = new URLSearchParams({
+        autoplay: 1,
+        mute: 0,
+        controls: 1,
+        rel: 0,
+        modestbranding: 1,
+        start: start,
+        end: end,
+        loop: 1,
+        playlist: videoId,
+        enablejsapi: 0,
+      });
+      return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+    }
+
+    function loadNewVideo() {
+      answered = false;
+      clearTimeout(loopTimer);
+      hideResult();
+
+      // Show loading overlay
+      document.getElementById('loadingOverlay').style.display = 'flex';
+
+      // Pick random entry
+      currentEntry = DATASET[Math.floor(Math.random() * DATASET.length)];
+
+      // Pick correct caption
+      const corrIdx = Math.floor(Math.random() * currentEntry.captions.length);
+      correctCaption = currentEntry.captions[corrIdx];
+
+      // 3 wrong captions from other entries — fast O(1) random sampling (no sort on 9k items)
+      const wrongCaptions = [];
+      const usedIds = new Set([currentEntry.id]);
+      while (wrongCaptions.length < 3) {
+        const candidate = DATASET[Math.floor(Math.random() * DATASET.length)];
+        if (!usedIds.has(candidate.id)) {
+          usedIds.add(candidate.id);
+          wrongCaptions.push(candidate.captions[Math.floor(Math.random() * candidate.captions.length)]);
+        }
+      }
+
+      // Shuffle all 4
+      currentOptions = [correctCaption, ...wrongCaptions].sort(() => Math.random() - 0.5);
+      renderOptions();
+
+      // Set iframe src directly — most reliable approach
+      const iframe = document.getElementById('ytPlayer');
+      iframe.src = buildEmbedUrl(currentEntry.url, currentEntry.start, currentEntry.end);
+
+      // Hide loading overlay once iframe fires load event
+      iframe.onload = () => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        scheduleLoop();
+      };
+    }
+
+    function scheduleLoop() {
+      const duration = (currentEntry.end - currentEntry.start) * 1000;
+      const loopAfter = duration + 2000;
+      loopTimer = setTimeout(() => {
+        if (!answered) {
+          const iframe = document.getElementById('ytPlayer');
+          const src = iframe.src;
+          iframe.src = '';
+          requestAnimationFrame(() => { iframe.src = src; });
+          scheduleLoop();
+        }
+      }, loopAfter);
+    }
+
+    // ─── UI ───────────────────────────────────────────────────────────────────────
+    function renderOptions() {
+      const grid = document.getElementById('optionsGrid');
+      grid.innerHTML = '';
+      currentOptions.forEach((caption, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.id = `opt-${i}`;
+        btn.innerHTML = `<span class="badge">${LABELS[i]}</span><span>${capitalize(caption)}</span>`;
+        btn.onclick = () => handleAnswer(i, caption);
+        grid.appendChild(btn);
+      });
+    }
+
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    function handleAnswer(index, caption) {
+      if (answered) return;
+      answered = true;
+      clearTimeout(loopTimer);
+      document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+
+      const btn = document.getElementById(`opt-${index}`);
+      if (caption === correctCaption) {
+        btn.classList.add('correct');
+        showResult('success', '✅ Correct! You passed the verification.');
+      } else {
+        btn.classList.add('wrong');
+        currentOptions.forEach((c, i) => {
+          if (c === correctCaption) document.getElementById(`opt-${i}`).classList.add('reveal-correct');
+        });
+        showResult('fail', '❌ Incorrect. The highlighted option was the correct answer.');
+      }
+    }
+
+    function changeVideo() {
+      if (changesLeft <= 0) return;
+      changesLeft--;
+      updateDots();
+      loadNewVideo();
+    }
+
+    function updateDots() {
+      const used = 3 - changesLeft;
+      for (let i = 0; i < 3; i++) {
+        document.getElementById(`dot${i}`).classList.toggle('used', i < used);
+      }
+      const btn = document.getElementById('changeBtn');
+      const txt = document.getElementById('skipsText');
+      if (changesLeft === 0) { btn.disabled = true; txt.textContent = 'No changes left'; }
+      else { txt.textContent = `${changesLeft} change${changesLeft === 1 ? '' : 's'} left`; }
+    }
+
+    function showResult(type, msg) {
+      const b = document.getElementById('resultBanner');
+      b.className = `result-banner ${type}`;
+      b.innerHTML = `<span class="result-icon">${type === 'success' ? '✅' : '❌'}</span><span>${msg}</span>`;
+      b.style.display = 'flex';
+    }
+
+    function hideResult() {
+      const b = document.getElementById('resultBanner');
+      b.style.display = 'none';
+      b.className = 'result-banner';
+    }
+
+    // ─── Boot ─────────────────────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', async () => {
+      await fetchDataset();
+      loadNewVideo();
+    });
+  </script>
+</body>
+
+</html>
